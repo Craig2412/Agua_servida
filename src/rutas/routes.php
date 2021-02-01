@@ -66,22 +66,12 @@ $app->post('/we', function (Request $request, Response $response, array $args) {
     }
 });
 
-$app->put('/api/actualizacion/preferencial/lps', function (Request $request, Response $response){
-       
-    $body = json_decode($request->getBody());
-    //$body = json_decode($body->body);
 
-        $sql = "SELECT `usuarios`.`nick`  , `rol`.`rol` 
-            FROM `usuarios`
-            LEFT JOIN `rol` ON `usuarios`.`id_rol` = `rol`.`id_rol`
-            WHERE `id_usuario` = ? ";
-        $db = new DB();
-        $stmt = $db->consultaAll('user', $sql, $body); 
-        if ($stmt) {
-            return "Actualizado";
-        }else {return "Error";      }
 
- });
+
+
+
+
 
 //creacion de usuario, solo con filtro de email y nick
 $app->post('/api/creacion/usuarios', function (Request $request, Response $response) { 
@@ -248,25 +238,38 @@ $app->group('/api/proyectos/', function () use ($app) {
         $id_proyecto = $request->getAttribute('id_proyecto');
         
     
-                $sql = "SELECT `proyectos`.`id_proyecto`, `proyectos`.`id_estatus`as `id_proyecto_estatus`, `proyectos`.`id_estado` as `id_proyecto_estado` ,  `datos`.*, `ciclos`.*, `ejecucion_financiera`.* ,`inversion`.*, `estados`.`estado`, `municipios`.`municipio`, `parroquias`.`parroquia`, `hidrologicas`.`hidrologica`, `estatus`.`estatus`, `lapso`.*, `lps`.* ,  `obras`.`coordenadas` as obras, `obras`.`id_obra`, `poblacion`.`poblacion_inicial`, `sector`.`coordenadas` as sector, `sector`.`id_sector`, `situaciones de servicio`.`situacion_de_servicio`, `soluciones`.`solucion`
-                FROM `proyectos` 
-                    LEFT JOIN `datos` ON `proyectos`.`id_datos` = `datos`.`id_datos` 
-                    LEFT JOIN `ciclos` ON `proyectos`.`id_ciclo` = `ciclos`.`id_ciclo` 
-                    LEFT JOIN `ejecucion_financiera` ON `proyectos`.`id_ejecucion_financiera` = `ejecucion_financiera`.`id_ejecucion_financiera` 
-                    LEFT JOIN `inversion` ON `inversion`.`id_ejecucion_financiera` = `ejecucion_financiera`.`id_ejecucion_financiera`
-                    LEFT JOIN `estados` ON `proyectos`.`id_estado` = `estados`.`id_estado` 
-                    LEFT JOIN `municipios` ON `proyectos`.`id_municipio` = `municipios`.`id_municipio` 
-                    LEFT JOIN `parroquias` ON `parroquias`.`id_parroquia` = `proyectos`.`id_parroquia`
-                    LEFT JOIN `hidrologicas` ON `hidrologicas`.`id_hidrologica`= `proyectos`.`id_hidrologica` 
-                    LEFT JOIN `estatus` ON `proyectos`.`id_estatus` = `estatus`.`id_estatus` 
-                    LEFT JOIN `lapso` ON `proyectos`.`id_lapso` = `lapso`.`id_lapso` 
-                    LEFT JOIN `lps` ON `proyectos`.`id_lps` = `lps`.`id_lps`
-                    LEFT JOIN `obras` ON `proyectos`.`id_obra` = `obras`.`id_obra` 
-                    LEFT JOIN `poblacion` ON `proyectos`.`id_poblacion` = `poblacion`.`id_problacion` 
-                    LEFT JOIN `sector` ON `proyectos`.`id_sector` = `sector`.`id_sector` 
-                    LEFT JOIN `situaciones de servicio` ON `proyectos`.`id_estado_proyecto` = `situaciones de servicio`.`id_situacion_de_servicio` 
-                    LEFT JOIN `soluciones` ON datos.`id_tipo_solucion` = `soluciones`.`id_solucion`
-                    WHERE `proyectos`.`id_proyecto` =  ?";
+                $sql = "SELECT `proyectos_as`.`id_proyecto`,
+                `datos_as`.*,
+                `hidrologicas`.`hidrologica`,
+                `estados`.`estado`,
+                `municipios`.`municipio`,
+                `parroquias`.`parroquia`,
+                `obras`.`coordenadas`,
+                `sector`.`coordenadas`,
+                `lapso`.*,
+                `estatus`.*,
+                `estado_actual_as`.`estado_actual_as`,
+                `ejecucion_financiera`.*,
+                `inversion`.*,
+                `poblacion`.`poblacion_inicial`,
+                `soluciones`.`solucion`
+                FROM `proyectos_as` 
+                    LEFT JOIN `datos_as` ON `proyectos_as`.`id_datos` = `datos_as`.`id_datos` 
+                    LEFT JOIN `hidrologicas` ON `proyectos_as`.`id_hidrologica` = `hidrologicas`.`id_hidrologica` 
+                    LEFT JOIN `estados` ON `hidrologicas`.`id_estado` = `estados`.`id_estado` 
+                    LEFT JOIN `municipios` ON `proyectos_as`.`id_municipio` = `municipios`.`id_municipio` 
+                    LEFT JOIN `parroquias` ON `proyectos_as`.`id_parroquia` = `parroquias`.`id_parroquia` 
+                    LEFT JOIN `obras` ON `proyectos_as`.`id_obra` = `obras`.`id_obra` 
+                    LEFT JOIN `sector` ON `proyectos_as`.`id_sector` = `sector`.`id_sector` 
+                    LEFT JOIN `lapso` ON `proyectos_as`.`id_lapso` = `lapso`.`id_lapso` 
+                    LEFT JOIN `estatus` ON `proyectos_as`.`id_estatus` = `estatus`.`id_estatus` 
+                    LEFT JOIN `estado_actual_as` ON `proyectos_as`.`id_estado_actual_as` = `estado_actual_as`.`id_estado_actual_as` 
+                    LEFT JOIN `ejecucion_financiera` ON `proyectos_as`.`id_ejecucion_financiera` = `ejecucion_financiera`.`id_ejecucion_financiera` 
+                    LEFT JOIN `inversion` ON `inversion`.`id_ejecucion_financiera` = `ejecucion_financiera`.`id_ejecucion_financiera` 
+                    LEFT JOIN `poblacion` ON `proyectos_as`.`id_poblacion` = `poblacion`.`id_problacion` 
+                    LEFT JOIN `soluciones` ON `datos_as`.`id_tipo_solucion` = `soluciones`.`id_solucion`
+                    
+                     WHERE `proyectos_as`.`id_proyecto` =  ?";
     
                 
         try {
@@ -279,11 +282,11 @@ $app->group('/api/proyectos/', function () use ($app) {
             
             
                 if ($resultado) {
-                    $sql = "SELECT `acciones_especificas`.* , unidades.* , intervencion.* 
-                    FROM `acciones_especificas` 
-                    LEFT JOIN intervencion ON acciones_especificas.id_intervencion = intervencion.id_intervencion 
-                    LEFT JOIN unidades ON acciones_especificas.id_unidades = unidades.id_unidades 
-                    WHERE acciones_especificas.id_datos = ?";
+                    $sql = "SELECT `acciones_especifica_as`.*, `proceso`.*, `tipo_unidad`.*
+                    FROM `acciones_especifica_as` 
+                        LEFT JOIN `proceso` ON `acciones_especifica_as`.`id_proceso` = `proceso`.`id_proceso` 
+                        LEFT JOIN `tipo_unidad` ON `acciones_especifica_as`.`id_tipo_unidad` = `tipo_unidad`.`id_tipo_unidad`
+                        WHERE `acciones_especifica_as`.`id_datos_as` = ?";
                     
                     
                     $resultado = $db->consultaAll('mapa', $sql , [$id_datos]);
@@ -384,18 +387,17 @@ $app->group('/api/proyectos/', function () use ($app) {
             }
     
             $sql = "SELECT COUNT(*) as Paginas
-                    FROM proyectos
-                    LEFT JOIN estados ON proyectos.id_estado = estados.id_estado 
-                    LEFT JOIN municipios ON proyectos.id_municipio = municipios.id_municipio 
-	                LEFT JOIN parroquias ON parroquias.id_parroquia = proyectos.id_parroquia
-                    LEFT JOIN datos ON proyectos.id_datos = datos.id_datos
-                    LEFT JOIN estatus ON proyectos.id_estatus = estatus.id_estatus
-                    LEFT JOIN ciclos ON proyectos.id_ciclo = ciclos.id_ciclo
-                    LEFT JOIN soluciones ON datos.id_tipo_solucion = soluciones.id_solucion
-                    LEFT JOIN `situaciones de servicio` ON proyectos.id_estado_proyecto = `situaciones de servicio`.id_situacion_de_servicio
-                    LEFT JOIN acciones_especificas ON acciones_especificas.id_datos = datos.id_datos
-                    LEFT JOIN intervencion ON acciones_especificas.id_intervencion = intervencion.id_intervencion
-                    LEFT JOIN unidades ON acciones_especificas.id_unidades = unidades.id_unidades
+            FROM proyectos_as
+            LEFT JOIN estados ON proyectos_as.id_estado = estados.id_estado 
+            LEFT JOIN municipios ON proyectos_as.id_municipio = municipios.id_municipio 
+            LEFT JOIN parroquias ON parroquias.id_parroquia = proyectos_as.id_parroquia
+            LEFT JOIN datos_as ON proyectos_as.id_datos = datos_as.id_datos
+            LEFT JOIN estatus ON proyectos_as.id_estatus = estatus.id_estatus
+            LEFT JOIN soluciones ON datos_as.id_tipo_solucion = soluciones.id_solucion
+            LEFT JOIN estado_actual_as ON proyectos_as.id_estado_actual_as = estado_actual_as.id_estado_actual_as
+            LEFT JOIN acciones_especifica_as ON acciones_especifica_as.id_datos_as = datos_as.id_datos
+            LEFT JOIN proceso ON `acciones_especifica_as`.`id_proceso` = `proceso`.`id_proceso` 
+            LEFT JOIN tipo_unidad ON `acciones_especifica_as`.`id_tipo_unidad` = `tipo_unidad`.`id_tipo_unidad`                              
                     
                     {$where}";
 
@@ -433,9 +435,9 @@ $app->group('/api/proyectos/', function () use ($app) {
                 return json_encode($paginador->paginadorIncidencias($datos));             
             }
         }else {
-            $sql = "SELECT proyectos.`id_proyecto`, datos.`nombre`, datos.`accion_general`, soluciones.`solucion`, estatus.`estatus`
+            $sql = "SELECT proyectos_as.`id_proyecto`, datos_as.`nombre`, datos_as.`accion_general`, soluciones.`solucion`, estatus.`estatus`
             FROM proyectos 
-            LEFT JOIN datos ON proyectos.`id_datos` = datos.`id_datos` 
+            LEFT JOIN datos_as ON proyectos_as.`id_datos` = datos_as.`id_datos` 
             LEFT JOIN soluciones ON datos.`id_tipo_solucion` = soluciones.`id_solucion` 
             LEFT JOIN estatus ON proyectos.`id_estatus` = estatus.`id_estatus`";
              

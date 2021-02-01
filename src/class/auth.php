@@ -3,36 +3,21 @@
 use \Firebase\JWT\JWT;
 
 class Auth {
-    private static $secret_key = '814751571e197af005fa3505cdbb5d50';
+    private static $secret_key = '1';
     private static $encrypt = ['HS256'];
     private static $aud = null;
 
     public static function SignIn($data) {
-        $roles= "";
-        switch ($data["user_rol"]) {
-            case 1:
-                $roles = ["leer", "eliminar", "actualizar", "agregar", "ADpermisos"];
-                break;
-            case 2:
-                $roles = ["leer", "eliminar", "actualizar", "agregar"];
-                break;
-            case 3:
-                $roles = ["leer"];
-                break;
-            
-            default:
-                # code...
-                break;
-        }
+        $time = time();
+
 
         $token = array(
-            "iss" => "https://min-aguas.000webhostapp.com/",
+            "iss" => "http://localhost",
+            'aud' => self::Aud(),
             'data' => [
                 "user_login" => $data["user_login"],
                 "user_id" => $data["user_id"],
-                "scope"=> [$roles],
-                "user_hidrologica" =>$data["user_hidrologica"],
-                "user_estado" =>$data["user_estado"]
+                "user_rol" => $data["user_rol"]
             ]
         );
 
